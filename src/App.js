@@ -39,7 +39,6 @@ function App() {
               <Route path='/login' element={<Login />} />
               <Route path='/register' element={<Register />} />
               <Route path='/standart-pc' element={<Pc />} />
-              <Route path='/bookingform' element={<BookingForm />} />
               <Route path='/contact' element={<Contact />} />
               <Route path='/tournament' element={<Tournament />} />
               <Route
