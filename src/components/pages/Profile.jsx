@@ -5,16 +5,14 @@ import "../assets/css/user.css";
 import { FaUser } from "react-icons/fa6";
 import { IoIosSettings, IoIosNotifications } from "react-icons/io";
 import { MdOutlineSecurity } from "react-icons/md";
-import { CiCreditCard1 } from "react-icons/ci";
 import { IoFastFood } from "react-icons/io5";
-import '../assets/css/OrderList.css'
+import "../assets/css/OrderList.css";
 
 const UserProfile = () => {
     const [activeTab, setActiveTab] = useState("profile");
     const [notes, setNotes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
-    const [sessions, setSessions] = useState([]);
     const [orders, setOrders] = useState([]);
     const [editData, setEditData] = useState({
         username: "",
@@ -26,18 +24,6 @@ const UserProfile = () => {
     });
     const navigate = useNavigate();
 
-    useEffect(() => {
-        API.get("api/accounts/sessions/")
-            .then((res) => {
-                setSessions(res.data);
-                setLoading(false);
-            })
-            .catch(() => setLoading(false));
-    }, []);
-    useEffect(() => {
-        if (user) fetchOrders();
-    }, [user]);
-
     // Загружаем данные профиля
     useEffect(() => {
         API.get("api/accounts/profile/")
@@ -46,21 +32,18 @@ const UserProfile = () => {
                 setEditData({
                     username: res.data.username,
                     phone_number: res.data.phone_number,
+                    email: res.data.email || "",
+                    address: res.data.address || "",
                 });
+                setLoading(false);
             })
             .catch(() => navigate("/login"));
     }, [navigate]);
 
-    // Обновить профиль
-    const handleUpdateProfile = (e) => {
-        e.preventDefault();
-        API.put("api/accounts/edit-profile/", editData)
-            .then((res) => {
-                setUser(res.data);
-                alert("✅ Профиль обновлен");
-            })
-            .catch(() => alert("❌ Ошибка обновления профиля"));
-    };
+    // Загружаем заказы
+    useEffect(() => {
+        if (user) fetchOrders();
+    }, [user]);
 
     const fetchOrders = async () => {
         try {
@@ -71,9 +54,10 @@ const UserProfile = () => {
         }
     };
 
+    // Уведомления
     const fetchNotifications = async () => {
         try {
-            const res = await API.get("api/bron_Pc/notifications/"); // expects list of user's notifications
+            const res = await API.get("api/bron_Pc/notifications/");
             setNotes(res.data);
         } catch (err) {
             console.error("notifications fetch error", err);
@@ -88,15 +72,17 @@ const UserProfile = () => {
         return () => clearInterval(interval);
     }, []);
 
-    // Отметить как прочитанное
-    const markRead = async (id) => {
-        try {
-            await API.patch(`api/bron_Pc/notifications/${id}/`, { is_read: true });
-            setNotes(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
-        } catch (err) {
-            console.error(err);
-        }
+    // Обновить профиль
+    const handleUpdateProfile = (e) => {
+        e.preventDefault();
+        API.put("api/accounts/edit-profile/", editData)
+            .then((res) => {
+                setUser(res.data);
+                alert("✅ Профиль обновлен");
+            })
+            .catch(() => alert("❌ Ошибка обновления профиля"));
     };
+
     // Смена пароля
     const handleChangePassword = (e) => {
         e.preventDefault();
@@ -108,17 +94,15 @@ const UserProfile = () => {
             .catch(() => alert("❌ Ошибка смены пароля"));
     };
 
-    const handleDelete = (id) => {
-        if (!window.confirm("Завершить эту сессию?")) return;
-
-        API.delete(`api/accounts/sessions/${id}/delete/`)
-            .then(() => {
-                setSessions(sessions.filter((s) => s.id !== id));
-            })
-            .catch(() => alert("❌ Ошибка завершения сессии"));
+    // Отметить как прочитанное
+    const markRead = async (id) => {
+        try {
+            await API.patch(`api/bron_Pc/notifications/${id}/`, { is_read: true });
+            setNotes(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+        } catch (err) {
+            console.error(err);
+        }
     };
-
-    if (loading) return <p>Загрузка...</p>;
 
     // Выход
     const handleLogout = () => {
@@ -127,8 +111,9 @@ const UserProfile = () => {
         alert("🚪 Вы вышли");
         navigate("/login");
     };
-    if (!user) return <p className="text-center">Загрузка...</p>;
-    if (!user) return <p>Для просмотра заказов нужно авторизоваться</p>;
+
+    if (loading) return <p>Загрузка...</p>;
+    if (!user) return <p className="text-center">Для доступа войдите в систему</p>;
 
     return (
         <div>
@@ -142,13 +127,17 @@ const UserProfile = () => {
             </div>
 
             <div className="containeree">
-                <h1 className="welcome">Добро пожаловать,  {user.username} 🎉</h1>
+                <h1 className="welcome">Добро пожаловать, {user.username} 🎉</h1>
                 <nav aria-label="breadcrumb" className="main-breadcrumbe">
                     <ol className="breadcrumb">
                         <li className="breadcrumb-item"><a href="/">Основной</a></li>
                         <li className="breadcrumb-item"><a href="#">Пользователь</a></li>
                         <li className="breadcrumb-item active" aria-current="page">Настройки профиля</li>
-                        <li className="breadcrumb-item active" aria-current="page"><a href="/standart-pc" className="breadcrumb-item" style={{ color: '#6c757d' }}>Забронировать Pc</a></li>
+                        <li className="breadcrumb-item active" aria-current="page">
+                            <a href="/standart-pc" className="breadcrumb-item" style={{ color: '#6c757d' }}>
+                                Забронировать Pc
+                            </a>
+                        </li>
                     </ol>
                 </nav>
 
@@ -163,12 +152,6 @@ const UserProfile = () => {
                                         className={`nav-iteme nav-link ${activeTab === "profile" ? "active" : ""}`}
                                     >
                                         <FaUser /> Информация профиля
-                                    </button>
-                                    <button
-                                        onClick={() => setActiveTab("account")}
-                                        className={`nav-iteme nav-link ${activeTab === "account" ? "active" : ""}`}
-                                    >
-                                        <IoIosSettings /> Активные сессии
                                     </button>
                                     <button
                                         onClick={() => setActiveTab("security")}
@@ -197,6 +180,7 @@ const UserProfile = () => {
                     <div className="col-md-8">
                         <div className="carde">
                             <div className="card-body tab-content">
+                                {/* Профиль */}
                                 {activeTab === "profile" && (
                                     <div>
                                         <h6>Редактирование профиля</h6>
@@ -261,34 +245,7 @@ const UserProfile = () => {
                                     </div>
                                 )}
 
-                                {activeTab === "account" && (
-                                    <div className="list-group">
-                                        {sessions.length === 0 ? (
-                                            <p>Нет активных сессий ✅</p>
-                                        ) : (
-                                            sessions.map((s) => (
-                                                <div
-                                                    key={s.id}
-                                                    className="list-group-item d-flex justify-content-between align-items-center"
-                                                >
-                                                    <div>
-                                                        <p><strong>Устройство:</strong> {s.device}</p>
-                                                        <p><strong>IP:</strong> {s.ip_address}</p>
-                                                        <p><strong>Начало:</strong> {new Date(s.session_start).toLocaleString()}</p>
-                                                        <p><strong>Последняя активность:</strong> {new Date(s.last_activity).toLocaleString()}</p>
-                                                    </div>
-                                                    <button
-                                                        className="btn btn-sm btn-danger"
-                                                        onClick={() => handleDelete(s.id)}
-                                                    >
-                                                        Завершить
-                                                    </button>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-                                )}
-
+                                {/* Безопасность */}
                                 {activeTab === "security" && (
                                     <div>
                                         <h6>Смена пароля</h6>
@@ -317,6 +274,7 @@ const UserProfile = () => {
                                     </div>
                                 )}
 
+                                {/* Уведомления */}
                                 {activeTab === "notification" && (
                                     <div>
                                         <h6>Настройки уведомлений</h6>
@@ -353,6 +311,7 @@ const UserProfile = () => {
                                     </div>
                                 )}
 
+                                {/* Заказы */}
                                 {activeTab === "billing" && (
                                     <div>
                                         <h6><IoFastFood /> Мои заказы</h6>
