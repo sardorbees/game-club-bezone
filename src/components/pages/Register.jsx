@@ -2,42 +2,35 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa6";
 import API from "../api";
-import FloatingButtons from '../floatingbuttons/FloatingButtons';
+import FloatingButtons from "../floatingbuttons/FloatingButtons";
 import "../assets/css/app.min.css";
 import "../assets/css/style.css";
 import "../assets/css/Burger.css";
 import "../assets/css/GameClub.css";
-
 import { useLang } from "../translator/Translator";
 
 export default function Register() {
-    const [form, setForm] = useState({
-        username: "",
-        password: "",
-        phone_number: "",
-    });
-    const [showPassword, setShowPassword] = useState(false);
+    const [form, setForm] = useState({});
     const navigate = useNavigate();
+    const [showOld, setShowOld] = useState(false);
     const { lang } = useLang();
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm({ ...form, [name]: value });
+        const { name, value, files } = e.target;
+        setForm({ ...form, [name]: files ? files[0] : value });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         const formData = new FormData();
-        formData.append("username", form.username);
-        formData.append("password", form.password);
-        formData.append("phone_number", form.phone_number);
+        Object.entries(form).forEach(([k, v]) => v && formData.append(k, v));
 
         try {
             await API.post("api/accounts/register/", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
             alert("✅ Регистрация прошла успешно");
+            window.dispatchEvent(new Event("authChanged"));
             navigate("/login");
         } catch (err) {
             console.error(err.response?.data || err);
@@ -72,10 +65,8 @@ export default function Register() {
                     <input
                         type="text"
                         name="username"
-                        placeholder={
-                            lang === "uz" ? "Foydalanuvchi nomi" : "Имя пользователя"
-                        }
-                        value={form.username}
+                        placeholder={lang === "uz" ? "Foydalanuvchi nomi" : "Имя пользователя"}
+                        value={form.username || ""}
                         onChange={handleChange}
                         required
                     />
@@ -85,20 +76,20 @@ export default function Register() {
                     <label>{lang === "uz" ? "Parol" : "Пароль"}</label>
                     <div className="password-container">
                         <input
-                            type={showPassword ? "text" : "password"}
+                            type={showOld ? "text" : "password"}
                             name="password"
                             placeholder={lang === "uz" ? "Parol" : "Пароль"}
-                            value={form.password}
+                            value={form.password || ""}
                             onChange={handleChange}
                             required
                         />
                         <button
                             type="button"
-                            onClick={() => setShowPassword(!showPassword)}
+                            onClick={() => setShowOld(!showOld)}
                             className="theme-togglee"
                             aria-label="Показать или скрыть пароль"
                         >
-                            {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
+                            {showOld ? <FaRegEyeSlash /> : <FaRegEye />}
                         </button>
                     </div>
                 </div>
@@ -109,7 +100,7 @@ export default function Register() {
                         type="tel"
                         name="phone_number"
                         placeholder={lang === "uz" ? "Telefon raqami" : "Телефон"}
-                        value={form.phone_number}
+                        value={form.phone_number || ""}
                         onChange={handleChange}
                         required
                     />
@@ -122,7 +113,9 @@ export default function Register() {
                             ? "Men ommaviy taklif shartlarini qabul qilaman"
                             : "Я принимаю условия публичной оферты"}
                         <br />
-                        <a href="/login">{lang === "uz" ? "Login orqali kiring" : "Зайти через Вход"}</a>
+                        <a href="/login">
+                            {lang === "uz" ? "Login orqali kiring" : "Зайти через Вход"}
+                        </a>
                     </label>
                 </div>
 

@@ -7,6 +7,7 @@ import { TbDeviceGamepad3Filled } from "react-icons/tb";
 import { CgLogIn, CgLogOut } from "react-icons/cg";
 import { FaRegistered } from "react-icons/fa6";
 import TarifPlan from "../tarif-plan/TarifPlan";
+import { Link } from "react-router-dom";
 
 function BottomNav() {
     const [active, setActive] = useState("home");
@@ -151,23 +152,48 @@ function BottomNav() {
                         Избранное ({wishlist.length})
                     </a>
                 </div>
+
                 {user ? (
-                    <div className="side-item profile-menu" style={{ display: "flex", alignItems: "center" }}>
-                        <div
-                            style={{ marginLeft: "1px", cursor: "pointer" }}
-                            onClick={() => window.location.href = "/profile"}
+                    <div
+                        className="side-item profile-menu"
+                        style={{ display: "flex", alignItems: "center", cursor: "pointer" }}
+                    >
+                        <Link
+                            to="/profile"
+                            style={{ display: "flex", alignItems: "center", textDecoration: "none" }}
                         >
-                            <FaUserCircle style={{ fontSize: "20px" }} /> <h1 style={{ color: 'white', fontSize: '14px' }}>{user.first_name || user.username}</h1>
-                        </div>
+                            {user.image ? (
+                                <img
+                                    src={user.image}
+                                    alt="avatar"
+                                    width="30"
+                                    height="30"
+                                    style={{
+                                        borderRadius: "50%",
+                                        marginRight: "8px",
+                                        objectFit: "cover",
+                                    }}
+                                />
+                            ) : (
+                                <FaUserCircle style={{ fontSize: "22px", marginRight: "6px", color: "white" }} />
+                            )}
+                            <span style={{ color: "white", fontSize: "14px" }}>
+                                {user.first_name || user.username}
+                            </span>
+                        </Link>
                     </div>
                 ) : (
                     <div style={{ position: "relative" }}>
                         <div
                             className="side-item ellipsis"
                             onClick={() => setShowMenu(!showMenu)}
-                            style={{ cursor: "pointer", display: "inline-flex", alignItems: "center" }}
+                            style={{
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                            }}
                         >
-                            <FaEllipsisH />
+                            <FaEllipsisH style={{ marginRight: "6px" }} />
                             <span>Еще</span>
                         </div>
 
@@ -176,43 +202,53 @@ function BottomNav() {
                                 className="menue"
                                 style={{
                                     position: "absolute",
-                                    top: "-23%",
+                                    top: "-20%",
                                     right: "50px",
-                                    background: "#000000",
-                                    animationDuration: "0.5s",
-                                    animationFillMode: "forwards",
-                                    boxShadow: "0 0 5px rgba(0,0,0,0.3)",
+                                    background: "#111",
+                                    borderRadius: "8px",
+                                    boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
                                     padding: "10px",
                                     zIndex: 100,
+                                    animation: "fadeIn 0.3s ease-in-out",
                                 }}
                             >
                                 <div
                                     className="register"
-                                    style={{ cursor: "pointer" }}
-                                    onClick={() => {
-                                        setShowMenu(false);
-                                        window.location.href = "/register";
+                                    style={{
+                                        cursor: "pointer",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        padding: "6px 8px",
                                     }}
+                                    onClick={() => setShowMenu(false)}
                                 >
-                                    <FaRegistered style={{ color: "white" }} />
-                                    <span className="login-h1">Регистрация</span>
+                                    <FaRegistered style={{ color: "white", marginRight: "6px" }} />
+                                    <Link
+                                        to="/register"
+                                        style={{ color: "white", textDecoration: "none" }}
+                                    >
+                                        Регистрация
+                                    </Link>
                                 </div>
                                 <div
                                     className="login"
-                                    style={{ cursor: "pointer" }}
-                                    onClick={() => {
-                                        setShowMenu(false);
-                                        window.location.href = "/login";
+                                    style={{
+                                        cursor: "pointer",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        padding: "6px 8px",
                                     }}
+                                    onClick={() => setShowMenu(false)}
                                 >
-                                    <CgLogIn style={{ color: "white" }} />
-                                    <span className="login-h1">Войти</span>
+                                    <CgLogIn style={{ color: "white", marginRight: "6px" }} />
+                                    <Link to="/login" style={{ color: "white", textDecoration: "none" }}>
+                                        Войти
+                                    </Link>
                                 </div>
                             </div>
                         )}
                     </div>
-                )}
-            </div>
+                )} </div>
         </>
     );
 }

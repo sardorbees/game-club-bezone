@@ -24,23 +24,27 @@ const UserProfile = () => {
     });
     const navigate = useNavigate();
 
-    // Загружаем данные профиля
+    // 🔥 Обновление профиля через событие authChanged
     useEffect(() => {
-        API.get("api/accounts/profile/")
-            .then((res) => {
-                setUser(res.data);
-                setEditData({
-                    username: res.data.username,
-                    phone_number: res.data.phone_number,
-                    email: res.data.email || "",
-                    address: res.data.address || "",
-                });
-                setLoading(false);
-            })
-            .catch(() => navigate("/login"));
-    }, [navigate]);
+        const update = () => {
+            const token = localStorage.getItem("access");
+            if (!token) return setUser(null);
+            API.get("api/accounts/profile/")
+                .then((res) => {
+                    setUser(res.data);
+                    setEditData(res.data);
+                })
+                .catch(() => setUser(null));
+        };
 
-    // Загружаем заказы
+        update(); // начальная загрузка
+
+        // слушаем событие при login/register/edit/logout
+        window.addEventListener("authChanged", update);
+
+        return () => window.removeEventListener("authChanged", update);
+    }, []);
+
     useEffect(() => {
         if (user) fetchOrders();
     }, [user]);
@@ -79,6 +83,7 @@ const UserProfile = () => {
             .then((res) => {
                 setUser(res.data);
                 alert("✅ Профиль обновлен");
+                window.dispatchEvent(new Event("authChanged")); // 👈 дергаем обновление
             })
             .catch(() => alert("❌ Ошибка обновления профиля"));
     };
@@ -98,7 +103,9 @@ const UserProfile = () => {
     const markRead = async (id) => {
         try {
             await API.patch(`api/bron_Pc/notifications/${id}/`, { is_read: true });
-            setNotes(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+            setNotes((prev) =>
+                prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+            );
         } catch (err) {
             console.error(err);
         }
@@ -109,6 +116,7 @@ const UserProfile = () => {
         localStorage.removeItem("access");
         localStorage.removeItem("refresh");
         alert("🚪 Вы вышли");
+        window.dispatchEvent(new Event("authChanged")); // 👈 обновляем
         navigate("/login");
     };
 
@@ -117,7 +125,10 @@ const UserProfile = () => {
 
     return (
         <div>
-            <div className="breadcumb-wrapper" data-bg-src="assets/img/bg/breadcumb-bg.jpg">
+            <div
+                className="breadcumb-wrapper"
+                data-bg-src="assets/img/bg/breadcumb-bg.jpg"
+            >
                 <div className="container">
                     <div className="breadcumb-content">
                         <br />
@@ -130,11 +141,21 @@ const UserProfile = () => {
                 <h1 className="welcome">Добро пожаловать, {user.username} 🎉</h1>
                 <nav aria-label="breadcrumb" className="main-breadcrumbe">
                     <ol className="breadcrumb">
-                        <li className="breadcrumb-item"><a href="/">Основной</a></li>
-                        <li className="breadcrumb-item"><a href="#">Пользователь</a></li>
-                        <li className="breadcrumb-item active" aria-current="page">Настройки профиля</li>
+                        <li className="breadcrumb-item">
+                            <a href="/">Основной</a>
+                        </li>
+                        <li className="breadcrumb-item">
+                            <a href="#">Пользователь</a>
+                        </li>
                         <li className="breadcrumb-item active" aria-current="page">
-                            <a href="/standart-pc" className="breadcrumb-item" style={{ color: '#6c757d' }}>
+                            Настройки профиля
+                        </li>
+                        <li className="breadcrumb-item active" aria-current="page">
+                            <a
+                                href="/standart-pc"
+                                className="breadcrumb-item"
+                                style={{ color: "#6c757d" }}
+                            >
                                 Забронировать Pc
                             </a>
                         </li>
@@ -149,25 +170,29 @@ const UserProfile = () => {
                                 <nav className="nav flex-column nav-pills nav-gap-y-1">
                                     <button
                                         onClick={() => setActiveTab("profile")}
-                                        className={`nav-iteme nav-link ${activeTab === "profile" ? "active" : ""}`}
+                                        className={`nav-iteme nav-link ${activeTab === "profile" ? "active" : ""
+                                            }`}
                                     >
                                         <FaUser /> Информация профиля
                                     </button>
                                     <button
                                         onClick={() => setActiveTab("security")}
-                                        className={`nav-iteme nav-link ${activeTab === "security" ? "active" : ""}`}
+                                        className={`nav-iteme nav-link ${activeTab === "security" ? "active" : ""
+                                            }`}
                                     >
                                         <MdOutlineSecurity /> Безопасность
                                     </button>
                                     <button
                                         onClick={() => setActiveTab("notification")}
-                                        className={`nav-iteme nav-link ${activeTab === "notification" ? "active" : ""}`}
+                                        className={`nav-iteme nav-link ${activeTab === "notification" ? "active" : ""
+                                            }`}
                                     >
                                         <IoIosNotifications /> Уведомления
                                     </button>
                                     <button
                                         onClick={() => setActiveTab("billing")}
-                                        className={`nav-iteme nav-link ${activeTab === "billing" ? "active" : ""}`}
+                                        className={`nav-iteme nav-link ${activeTab === "billing" ? "active" : ""
+                                            }`}
                                     >
                                         <IoFastFood /> Заказы
                                     </button>
@@ -194,7 +219,10 @@ const UserProfile = () => {
                                                     value={editData.username}
                                                     placeholder="Имя пользователя"
                                                     onChange={(e) =>
-                                                        setEditData({ ...editData, username: e.target.value })
+                                                        setEditData({
+                                                            ...editData,
+                                                            username: e.target.value,
+                                                        })
                                                     }
                                                 />
                                             </div>
@@ -207,7 +235,10 @@ const UserProfile = () => {
                                                     placeholder="Телефон"
                                                     value={editData.phone_number}
                                                     onChange={(e) =>
-                                                        setEditData({ ...editData, phone_number: e.target.value })
+                                                        setEditData({
+                                                            ...editData,
+                                                            phone_number: e.target.value,
+                                                        })
                                                     }
                                                 />
                                             </div>
@@ -218,9 +249,12 @@ const UserProfile = () => {
                                                     type="email"
                                                     placeholder="Электронная почта"
                                                     className="form-control"
-                                                    value={editData.email}
+                                                    value={editData.email || ""}
                                                     onChange={(e) =>
-                                                        setEditData({ ...editData, email: e.target.value })
+                                                        setEditData({
+                                                            ...editData,
+                                                            email: e.target.value,
+                                                        })
                                                     }
                                                 />
                                             </div>
@@ -231,9 +265,12 @@ const UserProfile = () => {
                                                     type="text"
                                                     placeholder="Адрес"
                                                     className="form-control"
-                                                    value={editData.address}
+                                                    value={editData.address || ""}
                                                     onChange={(e) =>
-                                                        setEditData({ ...editData, address: e.target.value })
+                                                        setEditData({
+                                                            ...editData,
+                                                            address: e.target.value,
+                                                        })
                                                     }
                                                 />
                                             </div>
@@ -257,20 +294,37 @@ const UserProfile = () => {
                                                     placeholder="Старый пароль"
                                                     className="form-control"
                                                     value={passwordData.old_password}
-                                                    onChange={(e) => setPasswordData({ ...passwordData, old_password: e.target.value })}
+                                                    onChange={(e) =>
+                                                        setPasswordData({
+                                                            ...passwordData,
+                                                            old_password: e.target.value,
+                                                        })
+                                                    }
                                                 />
                                                 <input
                                                     type="password"
                                                     placeholder="Новый пароль"
                                                     className="form-control mt-2"
                                                     value={passwordData.new_password}
-                                                    onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })}
+                                                    onChange={(e) =>
+                                                        setPasswordData({
+                                                            ...passwordData,
+                                                            new_password: e.target.value,
+                                                        })
+                                                    }
                                                 />
                                             </div>
-                                            <button type="submit" className="btn btn-warning">Изменить пароль</button>
+                                            <button type="submit" className="btn btn-warning">
+                                                Изменить пароль
+                                            </button>
                                         </form>
                                         <hr />
-                                        <button onClick={handleLogout} className="btn btn-dangere">🚪 Выйти</button>
+                                        <button
+                                            onClick={handleLogout}
+                                            className="btn btn-dangere"
+                                        >
+                                            🚪 Выйти
+                                        </button>
                                     </div>
                                 )}
 
@@ -285,7 +339,8 @@ const UserProfile = () => {
                                                 {notes.map((n) => (
                                                     <li
                                                         key={n.id}
-                                                        className={`notification-item ${n.is_read ? "read" : "unread"}`}
+                                                        className={`notification-item ${n.is_read ? "read" : "unread"
+                                                            }`}
                                                     >
                                                         <div className="notification-header">
                                                             <b>{n.message}</b>
@@ -297,10 +352,14 @@ const UserProfile = () => {
                                                             Дата: {n.booking_date} {n.booking_time}
                                                         </div>
                                                         <div className="notification-status">
-                                                            Статус: {n.is_approved ? "✅ Одобрено" : "⏳ В ожидании"}
+                                                            Статус:{" "}
+                                                            {n.is_approved ? "✅ Одобрено" : "⏳ В ожидании"}
                                                         </div>
                                                         {!n.is_read && (
-                                                            <button className="mark-read-btn" onClick={() => markRead(n.id)}>
+                                                            <button
+                                                                className="mark-read-btn"
+                                                                onClick={() => markRead(n.id)}
+                                                            >
                                                                 Отметить прочитанным
                                                             </button>
                                                         )}
@@ -314,24 +373,28 @@ const UserProfile = () => {
                                 {/* Заказы */}
                                 {activeTab === "billing" && (
                                     <div>
-                                        <h6><IoFastFood /> Мои заказы</h6>
+                                        <h6>
+                                            <IoFastFood /> Мои заказы
+                                        </h6>
                                         <hr />
                                         {orders.length === 0 ? (
                                             <p>Заказы отсутствуют</p>
                                         ) : (
-                                            orders.map(order => (
+                                            orders.map((order) => (
                                                 <div key={order.id} className="order">
                                                     <h3>
-                                                        Заказ #{order.id} — {new Date(order.created_at).toLocaleString()}
+                                                        Заказ #{order.id} —{" "}
+                                                        {new Date(order.created_at).toLocaleString()}
                                                     </h3>
 
                                                     <p>
-                                                        <b>Кабинет:</b> {order.cabinet} | <b>Комната:</b> {order.room} |{" "}
-                                                        <b>Место:</b> {order.seat} | <b>Зоны и Тарифы:</b> {order.order_type}
+                                                        <b>Кабинет:</b> {order.cabinet} | <b>Комната:</b>{" "}
+                                                        {order.room} | <b>Место:</b> {order.seat} |{" "}
+                                                        <b>Зоны и Тарифы:</b> {order.order_type}
                                                     </p>
 
                                                     <ul>
-                                                        {order.items.map(item => (
+                                                        {order.items.map((item) => (
                                                             <li key={item.id}>
                                                                 {item.title} — {item.quantity} шт —{" "}
                                                                 {Number(item.price) * item.quantity} сум
