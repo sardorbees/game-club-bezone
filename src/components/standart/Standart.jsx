@@ -28,7 +28,11 @@ const PcCard = ({ number }) => {
     // Загружаем бронь с сервера
     const fetchBooking = async () => {
         try {
-            const response = await API.get(`api/bron_Pc/bookings/${number}/`);
+            const response = await API.get(`/api/bron_Pc/bookings/${number}/`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("access")}`,
+                },
+            });
             if (response.data) setBooking(response.data);
             else setBooking(null);
         } catch (err) {
@@ -55,7 +59,7 @@ const PcCard = ({ number }) => {
 
         try {
             const response = await API.post(
-                "api/bron_Pc/bookings/create/",
+                "/api/bron_Pc/bookings/create/",
                 form,
                 {
                     headers: {
@@ -68,26 +72,39 @@ const PcCard = ({ number }) => {
             setIsBooking(false);
             setMsg("Бронирование успешно ✅");
         } catch (err) {
-            setMsg(err.response?.data?.detail || "Ошибка при бронировании ❌");
+            if (err.response) {
+                setMsg(err.response.data?.detail || "Ошибка при бронировании ❌");
+            } else {
+                setMsg("Сервер недоступен ❌");
+            }
         }
     };
+
 
     const handleDelete = async () => {
         if (!user?.is_admin || !booking) return;
 
         try {
-            await API.delete(`api/bron_Pc/bookings/${booking.id}/delete/`, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("access")}`,
-                },
-            });
+            await API.delete(
+                `/api/bron_Pc/bookings/${booking.id}/delete/`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("access")}`,
+                    },
+                }
+            );
 
             setBooking(null);
             setMsg("Бронь удалена ✅");
         } catch (err) {
-            setMsg("Ошибка при удалении ❌");
+            if (err.response) {
+                setMsg(err.response.data?.detail || "Ошибка при удалении ❌");
+            } else {
+                setMsg("Сервер недоступен ❌");
+            }
         }
     };
+
 
     return (
         <div className={`pc-card-container neon-border ${booking ? "booked" : ""}`}>

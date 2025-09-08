@@ -23,7 +23,7 @@ import { AuthProvider } from './components/authсontext/AuthContext';
 import Card from './components/card/Card';
 import Wishlist from './components/wishlist/Wishlist';
 import OrderForm from './components/orderform/OrderForm';
-import Loading from './components/loading/Loading';
+// import Loading from './components/loading/Loading';
 
 function App() {
   return (
@@ -31,7 +31,7 @@ function App() {
       <AuthProvider>
         <TranslationProvider>
           <BrowserRouter>
-            <Loading>
+            {/* <Loading> */}
             <Header />
             <Routes>
               <Route path='/' element={<Main />} />
@@ -60,7 +60,7 @@ function App() {
             </Routes>
             <BottomNav />
             <Footer />
-            </Loading>
+            {/* </Loading> */}
           </BrowserRouter>
         </TranslationProvider>
       </AuthProvider>
